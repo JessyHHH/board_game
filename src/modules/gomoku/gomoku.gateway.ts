@@ -38,22 +38,22 @@ export class GomokuGateway implements OnGatewayInit, OnGatewayConnection, OnGate
         }
 
         //匹配成功
-        const game = this.gomokuService['findGame'](client.id);
-        const [player1, player2] = game?.player || [];
+        const game = result.game!;
+        const [player1, player2] = game.getPlayers();
 
         //玩家1黑棋子
-        this.server.to(player1).emit('game_start', {
-            gameId: result.gameId,
-            yourColor: 'black',
+        this.server.to(player1.getSocketId()).emit('game_start', {
+            gameId: game.getId(),
+            yourColor: player1.getColor(),
             yourTurn: true,
-            opponent: player2,
+            opponent: player2.getSocketId(),
         });
         //玩家2白棋子
-        this.server.to(player2).emit('game_start', {
-            gameId: result.gameId,
-            yourColor: 'white',
+        this.server.to(player2.getSocketId()).emit('game_start', {
+            gameId: game.getId(),
+            yourColor: player2.getColor(),
             yourTurn: false,
-            opponent: player1,
+            opponent: player1.getSocketId(),
         });
     }
 
@@ -76,56 +76,73 @@ export class GomokuGateway implements OnGatewayInit, OnGatewayConnection, OnGate
         }
 
         //下棋成功
-        const game = this.gomokuService['findGame'](client.id);
-        const opponent = game?.player.find((p) => p !== client.id);
+        const game = this.gomokuService.findGameByPlayer(client.id);
+        if (!game) {
+            client.emit('move_error', { message: 'Game not found' });
+            return;
+        }
+
+        const opponent = game.getOpponent(client.id);
+        if (!opponent) {
+            client.emit('move_error', { message: 'Opponent not found' });
+            return;
+        }
 
         const moveData = {
             x: moveDto.x,
             y: moveDto.y,
-            board: game?.board,
-            currentPlayer: game?.currentPlayer,
+            board: game.getBoardState(),
+            currentPlayer: game.getCurrentPlayer().getColor(),
         };
 
         client.emit('move_result', moveData);
         if (opponent) {
-            this.server.to(opponent).emit('move_result', moveData);
+            this.server.to(opponent.getSocketId()).emit('move_result', moveData);
         }
 
         //游戏是否结束
         if (result.gameOver) {
             const gameOverData = {
                 winner: result.winner,
-                board: game?.board,
+                board: game.getBoardState(),
             };
 
-            client.emit('game_over', gameOverData);
+            (client.emit('game_over', gameOverData), client.emit('game_over_message', { message: '赢的人给输的100块' }));
             if (opponent) {
-                this.server.to(opponent).emit('game_over', gameOverData);
+                this.server.to(opponent.getSocketId()).emit('game_over', gameOverData);
             }
 
-            console.log(`Game over: ${result.winner} wins`);
+            console.log(`Game over: ${result.winner} wins, 赢的人给输的100块`);
         }
     }
 
+    //投降
     @SubscribeMessage('surrender')
     public async handleSurrender(client: Socket) {
-        const game = this.gomokuService['findGame'](client.id);
-        const opponent = game?.player.find((p) => p !== client.id);
-
-        if (opponent) {
-            this.server.to(opponent).emit('opponent_surrendered', { message: 'opponent surrendered' });
+        const game = this.gomokuService.findGameByPlayer(client.id);
+        if (!game) {
+            client.emit('surrender_error', { message: 'Game not found' });
+            return;
         }
 
-        const gameOverData = {
-            winner: 'opponent',
-            board: game?.board,
-        };
-
-        client.emit('game_over', gameOverData);
+        const opponent = game.getOpponent(client.id);
+        game.finish();
+        //结束游戏
+        game.finish();
         if (opponent) {
-            this.server.to(opponent).emit('game_over', gameOverData);
+            this.server.to(opponent.getSocketId()).emit('opponent_surrendered', { message: 'opponent surrendered' });
+            this.server.to(opponent.getSocketId()).emit('game_over', {
+                winner: opponent.getColor(),
+                board: game.getBoardState(),
+                message: '赢的人给输的100块',
+            });
         }
 
-        console.log(`Game over: opponent surrendered`);
+        client.emit('game_over', {
+            winner: opponent?.getColor() || 'opponent',
+            board: game.getBoardState(),
+            message: '赢的人给输的100块',
+        });
+        console.log(`Game over: ${client.id} surrendered`);
     }
 }

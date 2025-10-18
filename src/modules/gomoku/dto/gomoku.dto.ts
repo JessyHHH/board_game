@@ -3,18 +3,21 @@ export class MoveDto {
     y: number;
 }
 
-export enum GameStatus {
-    WAITING = 'waiting',
-    PLAYING = 'playing',
-    FINISHED = 'finished',
+export interface GameStartData {
+    gameId: string;
+    yourColor: string;
+    yourTurn: boolean;
+    opponent: string;
 }
 
-export enum PieceType {
-    BLACK = 'black',
-    WHITE = 'white',
+export interface MoveResultData {
+    x: number;
+    y: number;
+    board: (number | null)[][];
+    currentPlayer: number;
 }
 
-export interface GameResult {
-    winner: PieceType | 'draw';
-    winningLine?: { row: number; col: number }[];
+export interface GameOverData {
+    winner: string;
+    board: (number | null)[][];
 }

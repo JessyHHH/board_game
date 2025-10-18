@@ -1,93 +1,62 @@
 import { Injectable } from '@nestjs/common';
-import { GomokuHelper } from '../common/gomoku.helper';
-
-//不使用mysql和redis，存在进程
-interface Game {
-    id: string;
-    player: string[]; //player1和player2的socketId
-    board: (number | null)[][]; // 0=黑棋, 1=白棋, null=空
-    currentPlayer: number; // 0=黑棋, 1=白棋,表示到谁下棋了
-}
+import { GameStartData } from './dto/gomoku.dto';
+import { Game } from './entities/game.entity';
+import { MatchMaker, MatchResult } from './entities/match-maker.entity';
+import { Player, playerColor } from './entities/player.entity';
+import { MoveResult } from '../common/moveResult';
 
 @Injectable()
 export class GomokuService {
-    private games = new Map<string, Game>();
-    private waiting: string | null = null;
+    private readonly games = new Map<string, Game>();
+    private readonly matchMaker = new MatchMaker();
 
-    //匹配
-    public async matchPlayer(socketId: string) {
-        if (!this.waiting) {
-            this.waiting = socketId;
+    //匹配玩家
+    public matchPlayer(socketId: string): { matched: boolean; game?: Game } {
+        const result = this.matchMaker.addPlayer(socketId);
+        if (!result.matched) {
             return { matched: false };
         }
 
-        const game = this.createGame(this.waiting, socketId);
-        this.games.set(game.id, game);
-        this.waiting = null;
-        return { matched: true, gameId: game.id };
+        const player1 = new Player(result.opponent!, playerColor.BLACK, 0);
+        const player2 = new Player(socketId, playerColor.WHITE, 1);
+        const game = new Game(player1, player2);
+
+        this.games.set(game.getId(), game);
+
+        return { matched: true, game };
     }
 
-    private createGame(player1: string, player2: string): Game {
-        const game: Game = {
-            id: GomokuHelper.generateGameId(player1, player2),
-            player: [player1, player2],
-            board: GomokuHelper.createEmptyBoard(),
-            currentPlayer: 0,
-        };
-        this.games.set(game.id, game);
-        return game;
+    //取消匹配
+    public cancelMatch(socketId: string): void {
+        this.matchMaker.removePlayer(socketId);
     }
+
     //下棋
-    public async makeMove(socketId: string, x: number, y: number) {
-        const game = this.findGame(socketId);
+    public makeMove(socketId: string, x: number, y: number) {
+        const game = this.games.get(socketId);
         if (!game) {
             return { success: false, error: 'Game not found' };
         }
 
-        const playerIndex = game.player.indexOf(socketId);
-        if (playerIndex === -1) {
-            return { success: false, error: 'Invalid player' };
-        }
-
-        if (!GomokuHelper.isValidMove(game.board, x, y)) {
-            return { success: false, error: 'Invalid move' };
-        }
-
-        if (GomokuHelper.checkWin(game.board, x, y, playerIndex)) {
-            return { success: true, winner: playerIndex, gameOver: true };
-        }
-
-        if (GomokuHelper.isBoardFull(game.board)) {
-            return { success: true, winner: null, gameOver: true };
-        }
-
-        //换人
-        game.currentPlayer = 1 - game.currentPlayer;
-        return { success: true, currentPlayer: game.currentPlayer };
+        return game.makeMove(socketId, x, y);
     }
 
-    private findGame(socketId: string): Game | undefined {
-        return Array.from(this.games.values()).find((game) => game.player.includes(socketId));
-    }
-    //断开连接
-    public async handleDisconnect(socketId: string) {
-        if (this.waiting === socketId) {
-            this.waiting = null;
+    //处理断开连接
+    public handleDisconnect(socketId: string): string | null {
+        this.matchMaker.removePlayer(socketId);
+
+        const game = this.findGameByPlayer(socketId);
+        if (game) {
+            const opponent = game.getOpponent(socketId);
+            this.games.delete(game.getId());
+            return opponent?.getSocketId() || null;
         }
 
-        //删除游戏
-        for (const [id, game] of this.games.entries()) {
-            if (game.player.includes(socketId)) {
-                this.games.delete(id);
-                return game.player.find((p) => p !== socketId) || null;
-            }
-        }
         return null;
     }
 
-    public async cancelMatch(socketId: string) {
-        if (this.waiting === socketId) {
-            this.waiting = null;
-        }
+    //查找游戏
+    public findGameByPlayer(socketId: string): Game | undefined {
+        return Array.from(this.games.values()).find((game) => game.hasPlayer(socketId));
     }
 }
