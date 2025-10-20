@@ -29,7 +29,15 @@ export class GomokuGateway implements OnGatewayInit, OnGatewayConnection, OnGate
 
     @SubscribeMessage('match')
     public async handleMatch(client: Socket) {
-        const result = await this.gomokuService.matchPlayer(client.id);
+        const userId = client.handshake.query.userId as string;
+        const opponentUserId = client.handshake.query.opponentUserId as string;
+        if (!userId || !opponentUserId) {
+            client.emit('match_error', { message: 'User ID or opponent user ID is required' });
+            return;
+        }
+        const userIdInt = parseInt(userId); //parseInt 将字符串转换为数字
+        const opponentUserIdInt = parseInt(opponentUserId); //parseInt 将字符串转换为数字
+        const result = await this.gomokuService.matchPlayer(client.id, userIdInt, opponentUserIdInt);
 
         //第一个玩家开始匹配第二个玩家
         if (!result.matched) {
@@ -106,6 +114,13 @@ export class GomokuGateway implements OnGatewayInit, OnGatewayConnection, OnGate
                 winner: result.winner,
                 board: game.getBoardState(),
             };
+
+            if (result.winner !== 'draw') {
+                const [player1, player2] = game.getPlayers();
+                const winner = result.winner === player1.getColor() ? player1 : player2;
+                const loser = result.winner === player1.getColor() ? player2 : player1;
+                await this.gomokuService.handleGameEnd(winner.getSocketId(), loser.getSocketId());
+            }
 
             (client.emit('game_over', gameOverData), client.emit('game_over_message', { message: '赢的人给输的100块' }));
             if (opponent) {

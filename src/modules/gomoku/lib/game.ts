@@ -1,5 +1,5 @@
-import { Board } from './board.entity';
-import { Player, playerColor } from './player.entity';
+import { Board } from '../entities/board.entity';
+import { Player, playerColor } from './player';
 import { GenerateGameID } from '../../common/generateGameID';
 import { MoveResult } from '../../common/moveResult';
 

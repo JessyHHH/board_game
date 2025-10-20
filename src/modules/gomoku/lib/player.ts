@@ -8,6 +8,7 @@ export class Player {
         private readonly socketId: string,
         private readonly color: playerColor,
         private readonly pieceType: number,
+        private readonly userId: number,
     ) {}
 
     public getSocketId(): string {
@@ -24,5 +25,9 @@ export class Player {
 
     public isBlack(): boolean {
         return this.pieceType === 0;
+    }
+
+    public getUserId(): number {
+        return this.userId;
     }
 }

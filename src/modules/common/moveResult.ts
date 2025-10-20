@@ -1,4 +1,4 @@
-import { playerColor } from '../gomoku/entities/player.entity';
+import { playerColor } from '../gomoku/lib/player';
 
 export interface MoveResult {
     success: boolean;
