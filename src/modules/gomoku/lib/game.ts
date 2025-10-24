@@ -92,6 +92,11 @@ export class Game {
 
     //获取对手
     public getOpponent(socketId: string): Player | null {
+        // 先检查这个玩家是否在游戏中
+        if (!this.hasPlayer(socketId)) {
+            return null;
+        }
+
         return this.player.find((player) => player.getSocketId() !== socketId) || null;
     }
 

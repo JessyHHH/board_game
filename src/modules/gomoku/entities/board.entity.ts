@@ -8,10 +8,10 @@ export class Board {
     //在棋盘上放置棋子
     public placeStone(x: number, y: number, player: number): boolean {
         if (!this.isValidMove(x, y)) {
-            throw new Error('Invalid move');
+            return false;
         }
         if (this.board[x][y] !== null) {
-            throw new Error('Cell already occupied');
+            return false;
         }
         this.board[x][y] = player;
         return true;

@@ -5,8 +5,8 @@ import { MatchMaker, MatchResult } from './entities/match-maker.entity';
 import { Player, playerColor } from './lib/player';
 import { MoveResult } from '../common/moveResult';
 import { Game as GameTimer, Player as PlayerTimer } from '../common/gameTimer';
-import { UsersService } from '../users/users.service';
 import { Balance } from './lib/balance';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class GomokuService {
@@ -99,10 +99,10 @@ export class GomokuService {
         const winner = player1.getSocketId() === winnerId ? player1 : player2;
         const loser = player1.getSocketId() === loserId ? player1 : player2;
 
-        try {
-            await Balance.win(winner, loser, this.usersService.getUserRepository());
-        } catch (error) {
-            console.error('Error handling game end:', error);
-        }
+        // try {
+        //     await Balance.win(winner, loser, this.usersService.getUserRepository());
+        // } catch (error) {
+        //     console.error('Error handling game end:', error);
+        // }
     }
 }
