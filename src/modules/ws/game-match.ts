@@ -1,4 +1,5 @@
 import { GAME_IDS, MESSAGE_TYPE } from '../common/common-type';
+import { GameRoomManager } from '../games/game-room-manager';
 import { ClientConnection } from './client-connection';
 import { ClientManager } from './client-connection-manager';
 
@@ -16,14 +17,22 @@ export class G_GameMatch {
             return;
         }
 
-        if (matchingSet.length > 0) {
+        let matched = false;
+        while (matchingSet.length > 0) {
             const opponentUserId = matchingSet.pop();
-            ClientManager.getClient(opponentUserId!);
+            const opponentClientConnection = ClientManager.getClient(opponentUserId!);
+            if (!opponentClientConnection) {
+                continue;
+            }
+
+            matched = true;
+            const gameRoom = GameRoomManager.createRoom(gameId, [clientConnection, opponentClientConnection]);
 
             ClientManager.sendMessage(clientConnection.getUserId()!, {
                 type: MESSAGE_TYPE.GAME_MATCHED,
                 data: {
                     gameId,
+                    roomId: gameRoom.getRoomId(),
                 },
             });
 
@@ -31,9 +40,12 @@ export class G_GameMatch {
                 type: MESSAGE_TYPE.GAME_MATCHED,
                 data: {
                     gameId,
+                    roomId: gameRoom.getRoomId(),
                 },
             });
-        } else {
+        }
+
+        if (!matched) {
             matchingSet.push(clientConnection.getUserId());
         }
     }

@@ -1,5 +1,5 @@
 import { UserEntity } from '../../users/entities/user.entity';
-import { Player } from './player';
+import { Player } from '../../games/gomoku/player';
 import { Repository } from 'typeorm';
 // import { User } from '../../users/entities/user.entity';
 

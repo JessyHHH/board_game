@@ -1,9 +1,12 @@
 import { Board } from '../entities/board.entity';
-import { Player, playerColor } from './player';
 import { GenerateGameID } from '../../common/generateGameID';
 import { MoveResult } from '../../common/moveResult';
+import { Player } from './player';
 
 export class Game {
+    isGameOver(arg0: string) {
+        throw new Error('Method not implemented.');
+    }
     private readonly id: string;
     private readonly player: [Player, Player];
     private readonly board: Board;

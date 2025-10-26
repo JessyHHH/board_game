@@ -56,6 +56,7 @@ function setupWebSocket(app: INestApplication) {
 
         // 检查用户是否已连接
         if (ClientManager.hasClient(userEntity!.id)) {
+            console.error(`user ${userEntity!.id} already connected`);
             socket.close(1008, 'Already connected');
             return;
         }

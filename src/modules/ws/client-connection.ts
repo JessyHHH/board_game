@@ -22,6 +22,10 @@ export class ClientConnection {
         return this.userEntity.id;
     }
 
+    public getUserEntity() {
+        return this.userEntity;
+    }
+
     public initialize() {
         // ping pong 是维持心跳用的
         this.client.on('pong', () => {

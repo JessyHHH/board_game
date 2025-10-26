@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { GameStartData } from './dto/gomoku.dto';
 import { Game } from './lib/game';
 import { MatchMaker, MatchResult } from './entities/match-maker.entity';
-import { Player, playerColor } from './lib/player';
 import { MoveResult } from '../common/moveResult';
 import { Game as GameTimer, Player as PlayerTimer } from '../common/gameTimer';
 import { Balance } from './lib/balance';
 import { UsersService } from '../users/users.service';
+import { Player, playerColor } from './lib/player';
 
 @Injectable()
 export class GomokuService {
