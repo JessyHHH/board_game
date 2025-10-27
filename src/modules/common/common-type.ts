@@ -12,7 +12,11 @@ export enum MESSAGE_TYPE {
     GAME_START = 'game-start',
 
     GAME_INPUT = 'game-input',
-    // GOMOKU_GAME_OVER = 'gomoku-game-over',
+    GAME_OVER = 'game-over', //处理胜利消息
+
+    //处理时间
+    GAME_TIME_UPDATE = 'game-time-update',
+    GAME_TIME_OUT = 'game-time-out',
 }
 
 export enum GAME_IDS {

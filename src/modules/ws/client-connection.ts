@@ -2,6 +2,7 @@ import WebSocket from 'ws';
 import { WEBSOCKET_STATUS } from '../common/common-type';
 import { MessageHandler } from './message-handler';
 import { UserEntity } from '../users/entities/user.entity';
+import { ClientManager } from './client-connection-manager';
 
 const MAX_CONNECTION_TIME = 1000 * 60 * 60 * 24; // 24 hours
 const MAX_INACTIVE_TIME_CLIENT = 1000 * 60 * 5; // 5 minutes
@@ -40,12 +41,14 @@ export class ClientConnection {
             console.error(`client ${this.userEntity.id} error`, error);
 
             this.status = WEBSOCKET_STATUS.DISCONNECTED;
+            ClientManager.checkAndSetClient();
         });
 
         this.client.on('close', (code: number, reason: string) => {
             console.error(`client ${this.userEntity.id} close`, code, reason);
 
             this.status = WEBSOCKET_STATUS.DISCONNECTED;
+            ClientManager.checkAndSetClient();
         });
 
         this.client.on('message', (message: Buffer) => {

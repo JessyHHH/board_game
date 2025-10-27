@@ -37,7 +37,7 @@ export class G_ClientConnectionManager {
         }
     }
 
-    private checkAndSetClient() {
+    public checkAndSetClient() {
         this.clients.forEach((client, connectionId) => {
             if (client.canClose()) {
                 client.close();

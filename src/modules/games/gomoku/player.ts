@@ -11,6 +11,7 @@ export class Player {
         private readonly clientConnection: ClientConnection,
         private isCurrentRound: boolean, // 是否当前回合
         private countdown: number, // 倒计时(秒)
+        private countdownRound: number, // 单回合倒计时(秒)
         private ready: boolean = false,
     ) {}
 
@@ -32,10 +33,31 @@ export class Player {
 
     public setCurrentRound(isCurrentRound: boolean): void {
         this.isCurrentRound = isCurrentRound;
+
+        if (isCurrentRound) {
+            this.countdownRound = 15;
+        }
+    }
+
+    public decrCountDownRound(): void {
+        this.countdown--;
+        this.countdownRound--;
     }
 
     public getCurrentRound(): boolean {
         return this.isCurrentRound;
+    }
+
+    public setCountDown(countdown: number) {
+        this.countdown = countdown;
+    }
+
+    public isCountDownOver(): boolean {
+        return this.countdown <= 0 || this.countdownRound <= 0;
+    }
+
+    public getCountDown(): number {
+        return this.countdown;
     }
 
     public toJson() {

@@ -7,6 +7,7 @@ import { GameRoomGomoku } from './gomoku/game-room-gomoku';
 export class G_GameRoomManager {
     private rooms: Map<string, GameRoom> = new Map();
 
+    //创建房间，创建一个roomId，根据游戏类型创建不同的游戏房间
     public createRoom(gameId: GAME_IDS, clients: ClientConnection[]) {
         const roomId = uuidv4();
         if (gameId === GAME_IDS.GOMOKU) {
