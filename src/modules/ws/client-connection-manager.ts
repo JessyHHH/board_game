@@ -1,18 +1,16 @@
 import { ClientConnection } from './client-connection';
+import { GameMatch } from './game-match';
 
 export class G_ClientConnectionManager {
     private clients: Map<number, ClientConnection> = new Map();
 
     public constructor() {
+        //设置定时器，每5秒检查一次客户端连接
         setInterval(this.checkAndSetClient.bind(this), 5000);
     }
 
     public hasClient(userId: number) {
         return this.clients.has(userId);
-    }
-
-    public getClient(userId: number) {
-        return this.clients.get(userId);
     }
 
     public register(client: ClientConnection) {
@@ -43,6 +41,8 @@ export class G_ClientConnectionManager {
                 client.close();
 
                 this.clients.delete(connectionId);
+
+                GameMatch.removeClient(client);
             } else {
                 client.ping();
             }

@@ -2,7 +2,7 @@ import { AfterLoad, AfterInsert, PrimaryGeneratedColumn, Column } from 'typeorm'
 
 export abstract class BaseEntity<T> {
     @PrimaryGeneratedColumn()
-    public id: number;
+    public id!: number;
 
     @Column({ name: 'created_at' })
     public createdAt: Date = new Date();
@@ -13,3 +13,4 @@ export abstract class BaseEntity<T> {
         this.id = Number(this.id);
     }
 }
+

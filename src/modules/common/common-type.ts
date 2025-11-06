@@ -4,12 +4,13 @@ export enum WEBSOCKET_STATUS {
 }
 
 export enum MESSAGE_TYPE {
-    INITIALIZED = 'initialized',
+    GAME_INIT = 'game-init',
     GAME_MATCH = 'game-match',
     GAME_MATCH_CANCEL = 'game-match-cancel',
     GAME_MATCHED = 'game-matched',
     GAME_JOIN_ROOM = 'game-join-room',
     GAME_START = 'game-start',
+    GAME_BALANCE_NOT_ENOUGH = 'game-balance-not-enough',
 
     GAME_INPUT = 'game-input',
     GAME_OVER = 'game-over', //处理胜利消息
@@ -21,4 +22,10 @@ export enum MESSAGE_TYPE {
 
 export enum GAME_IDS {
     GOMOKU = 'gomoku',
+}
+
+export enum MoneyTier{
+    LOW = 'low',
+    MEDIUM = 'medium',
+    HIGH = 'high',
 }

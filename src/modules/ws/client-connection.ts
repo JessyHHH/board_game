@@ -20,7 +20,7 @@ export class ClientConnection {
     }
 
     public getUserId() {
-        return this.userEntity.id;
+        return this.userEntity!.id;
     }
 
     public getUserEntity() {

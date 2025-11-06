@@ -10,6 +10,7 @@ import { ClientManager } from './modules/ws/client-connection-manager';
 import * as qs from 'querystring';
 import { UserTokenService } from './modules/users/user-token.service';
 import { UsersService } from './modules/users/users.service';
+import { MESSAGE_TYPE } from './modules/common/common-type';
 
 export let App: INestApplication;
 
@@ -67,11 +68,7 @@ function setupWebSocket(app: INestApplication) {
         clientConnection.initialize();
 
         ClientManager.sendMessage(userEntity!.id, {
-            type: 'game-init',
-            data: {
-                userId: userEntity!.id,
-                message: 'initialized',
-            },
+            type: MESSAGE_TYPE.GAME_INIT,
         });
 
         console.log(`user ${userEntity!.id} connected`);

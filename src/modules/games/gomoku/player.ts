@@ -1,14 +1,9 @@
-import { ClientConnection } from '../../ws/client-connection';
-
-export enum PLAYER_ID {
-    BLACK,
-    WHITE,
-}
+import { PLAYER_ID } from './lib/gomoku-Id';
 
 export class Player {
     constructor(
         private readonly playerId: PLAYER_ID,
-        private readonly clientConnection: ClientConnection,
+        private readonly userId: number,
         private isCurrentRound: boolean, // 是否当前回合
         private countdown: number, // 倒计时(秒)
         private countdownRound: number, // 单回合倒计时(秒)
@@ -16,7 +11,7 @@ export class Player {
     ) {}
 
     public getUserId(): number {
-        return this.clientConnection.getUserId();
+        return this.userId;
     }
 
     public setReady(): void {
@@ -64,8 +59,9 @@ export class Player {
         return {
             playerId: this.playerId,
             countdown: this.countdown,
+            countdownRound: this.countdownRound,
             isCurrentRound: this.isCurrentRound,
-            user: this.clientConnection.getUserEntity(),
+            userId: this.userId,
         };
     }
 }

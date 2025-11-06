@@ -2,7 +2,7 @@ import { GAME_IDS, MESSAGE_TYPE } from '../common/common-type';
 import { ClientConnection } from './client-connection';
 import { $enum } from 'ts-enum-util';
 import { GameMatch } from './game-match';
-import { GameRoomManager } from '../games/game-room-manager';
+import { GameRoomManager } from '../games/gameRoom/game-room-manager';
 
 export class G_MessageHandler {
     public async handle(clientConnection: ClientConnection, data: any) {

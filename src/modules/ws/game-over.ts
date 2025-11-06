@@ -1,5 +1,5 @@
 import { MESSAGE_TYPE } from '../common/common-type';
-import { GameRoom } from '../games/game-room';
+import { GameRoom } from '../games/gameRoom/game-room';
 import { ClientConnection } from './client-connection';
 import { ClientManager } from './client-connection-manager';
 

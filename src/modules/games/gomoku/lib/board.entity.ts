@@ -76,4 +76,8 @@ export class Board {
     public getState(): (number | null)[][] {
         return this.board.map((row) => row.slice());
     }
+
+    public isEmptyState(x: number, y: number): boolean {
+        return this.board[x][y] === null;
+    }
 }

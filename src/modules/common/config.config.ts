@@ -3,3 +3,5 @@ export const configServiceConfig: any = {
     cache: true,
     isGlobal: true,
 };
+
+export const GAME_RESULT_CHANNEL = process.env.GAME_RESULT_CHANNEL;
