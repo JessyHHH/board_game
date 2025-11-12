@@ -1,16 +1,17 @@
-import { GAME_IDS, MESSAGE_TYPE } from '../../common/common-type';
 import { GameRoom } from '../gameRoom/game-room';
 import { Player } from './player';
-import { PLAYER_ID } from './lib/gomoku-Id';
+import { Board } from '../xiangqi/lib/board.entity';
 import { shuffle } from 'lodash';
-import { Board } from './lib/board.entity';
+import { PLAYER_ID } from './lib/xiangqi-id';
+import { GAME_IDS, MESSAGE_TYPE } from '../../common/common-type';
+import { CheckWin } from './lib/checkWin';
+
+const TOTAL_COUNTDOWN_TIME = 600; // 总倒计时时间(秒)
+const COUNTDOWN_INTERVAL = 15; // 倒计时间隔时间(秒)
 
 enum GAME_TYPE {
     MOVE = 'move',
 }
-
-const TOTAL_COUNTDOWN_TIME = 600; // 总倒计时时间(秒)
-const COUNTDOWN_INTERVAL = 15; // 倒计时间隔时间(秒)
 
 interface IOptions {
     disableTimer?: boolean;
@@ -18,12 +19,14 @@ interface IOptions {
     totalCountDownTime?: number;
 }
 
-export class GameRoomGomoku extends GameRoom {
+export class GameRoomXiangqi extends GameRoom {
     private board: Board;
     private players: Player[] = [];
     private options: IOptions;
     private timer: NodeJS.Timeout;
+    private checkWin: CheckWin;
 
+    private isGameEnded: boolean = false;
     public constructor(roomId: string, userIds: number[], options: IOptions = {}) {
         super(roomId, userIds);
 
@@ -33,19 +36,20 @@ export class GameRoomGomoku extends GameRoom {
 
         this.options = options;
         this.board = new Board();
+        this.checkWin = new CheckWin();
     }
 
     public startGame(): void {
         const randomUserIds = shuffle(this.joinedUserIds);
         const player0 = new Player(
-            PLAYER_ID.BLACK,
+            PLAYER_ID.RED,
             randomUserIds[0],
             true,
             this.options.totalCountDownTime || TOTAL_COUNTDOWN_TIME,
             this.options.countDownInterval || COUNTDOWN_INTERVAL,
         );
         const player1 = new Player(
-            PLAYER_ID.WHITE,
+            PLAYER_ID.BLACK,
             randomUserIds[1],
             false,
             this.options.totalCountDownTime || TOTAL_COUNTDOWN_TIME,
@@ -58,7 +62,6 @@ export class GameRoomGomoku extends GameRoom {
         player1.setReady();
 
         //它本身就是布尔值
-        //如果disableTimer为true，则不启动定时器
         if (!this.options.disableTimer) {
             this.timer = setInterval(this.onInterval.bind(this), 1000);
         }
@@ -71,9 +74,13 @@ export class GameRoomGomoku extends GameRoom {
         });
     }
 
-    public handleInput(userId: number, input: any) {
+    public handleInput(userId: number, input: any): void {
         console.log('handleInput', input);
         const currentPlayer = this.getPlayerByUserId(userId);
+        if (this.isGameEnded) {
+            console.log('游戏已结束');
+            return;
+        }
 
         if (!currentPlayer) {
             console.error('currentPlayer not found');
@@ -81,13 +88,17 @@ export class GameRoomGomoku extends GameRoom {
         }
 
         if (input.gameType === GAME_TYPE.MOVE) {
-            //检查如果input.data.x和input.data.y重复输入，防御性编程
-            if (!this.board.isEmptyState(input.data.x, input.data.y)) {
-                console.log('重复输入');
+            const isMoveSuccess = this.board.movePiece(
+                input.data.fromX,
+                input.data.fromY,
+                input.data.toX,
+                input.data.toY,
+                currentPlayer!.getPlayerId(),
+            );
+            if (!isMoveSuccess) {
+                console.log('移动失败');
                 return;
             }
-
-            this.board.placeStone(input.data.x, input.data.y, currentPlayer!.getPlayerId());
 
             this.setPlayerCurrentRound(this.getOpponentPlayerByUserId(currentPlayer!.getUserId())!);
 
@@ -96,26 +107,31 @@ export class GameRoomGomoku extends GameRoom {
                 data: {
                     input: {
                         players: this.players.map((player) => player.toJson()),
-                        x: input.data.x,
-                        y: input.data.y,
+                        fromX: input.data.fromX,
+                        fromY: input.data.fromY,
+                        toX: input.data.toX,
+                        toY: input.data.toY,
                         player: currentPlayer.toJson(),
                     },
                 },
             });
 
-            // 胜利条件
-            if (this.board.checkWin(input.data.x, input.data.y, currentPlayer!.getPlayerId())) {
+            // 检查对手是否被将死
+            const opponentPlayer = this.getOpponentPlayerByUserId(currentPlayer!.getUserId());
+            if (opponentPlayer && this.checkWin.checkGameOver(this.board, currentPlayer!.getPlayerId())) {
                 this.gameOver(currentPlayer!);
-                return;
-            }
-
-            //检查平局
-            if (this.board.isFull()) {
-                this.gameOver(null);
                 return;
             }
         }
     }
+
+    // public onInterval(): void {
+    //     for (const player of this.players) {
+    //         if (!player.getCurrentRound()) {
+    //             continue;
+    //         }
+    //     }
+    // }
 
     // 每秒调一次
     public onInterval() {
@@ -147,7 +163,7 @@ export class GameRoomGomoku extends GameRoom {
                 gameOver: {
                     winner: winner?.getPlayerId() ?? null,
                 },
-                board: this.board.getState(),
+                board: this.board.getBoard(),
             },
         });
 
@@ -156,7 +172,7 @@ export class GameRoomGomoku extends GameRoom {
         this.messageQueueService.publish('game:results', {
             status: '0',
             data: {
-                gameId: GAME_IDS.GOMOKU,
+                gameId: GAME_IDS.XIANGQI,
                 roomId: this.roomId,
                 winner: winner?.getUserId() ?? null,
                 loser: loser?.getUserId() ?? null,
@@ -179,6 +195,23 @@ export class GameRoomGomoku extends GameRoom {
 
     private getOpponentPlayerByUserId(userId: number) {
         return this.players.find((player) => player.getUserId() !== userId);
+    }
+
+    private handleGameOver(gameResult: any): void {
+        this.isGameEnded = true;
+
+        if (this.timer) {
+            clearInterval(this.timer);
+        }
+
+        this.broadcastMessage({
+            type: MESSAGE_TYPE.GAME_OVER,
+            data: {
+                gameOver: {
+                    winner: gameResult.winner,
+                },
+            },
+        });
     }
 
     private setPlayerCurrentRound(player: Player) {

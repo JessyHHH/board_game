@@ -22,9 +22,10 @@ export enum MESSAGE_TYPE {
 
 export enum GAME_IDS {
     GOMOKU = 'gomoku',
+    XIANGQI = 'xiangqi',
 }
 
-export enum MoneyTier{
+export enum MoneyTier {
     LOW = 'low',
     MEDIUM = 'medium',
     HIGH = 'high',

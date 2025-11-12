@@ -3,6 +3,7 @@ import { ClientConnection } from '../../ws/client-connection';
 import { v4 as uuidv4 } from 'uuid';
 import { GameRoom } from './game-room';
 import { GameRoomGomoku } from '../gomoku/game-room-gomoku';
+import { GameRoomXiangqi } from '../xiangqi/game-room-xiangqi';
 
 export class G_GameRoomManager {
     private rooms: Map<string, GameRoom> = new Map();
@@ -11,6 +12,13 @@ export class G_GameRoomManager {
         const roomId = uuidv4();
         if (gameId === GAME_IDS.GOMOKU) {
             const gameRoom = new GameRoomGomoku(roomId, userIds, {});
+            this.rooms.set(roomId, gameRoom);
+
+            return gameRoom;
+        }
+
+        if (gameId === GAME_IDS.XIANGQI) {
+            const gameRoom = new GameRoomXiangqi(roomId, userIds, {});
             this.rooms.set(roomId, gameRoom);
 
             return gameRoom;
